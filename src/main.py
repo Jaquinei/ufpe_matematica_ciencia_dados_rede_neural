@@ -8,9 +8,13 @@ warnings.filterwarnings('ignore')
 import logging
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
+# usada para pegar o dataset de duas luas
 from sklearn import datasets
+# para o calculo de funções matemáticas (sigmoid, etc)
 import numpy as np
+# plotar os graficos
 import matplotlib.pyplot as plt
+#modelo de redes neurais
 from keras.models import Sequential
 from keras.layers import Dense, Input
 from keras.optimizers import SGD
@@ -75,12 +79,11 @@ def neural_net(x, d, w0, b0, b1, w1):
     e = y2 - d
     L = 1/2 * (e ** 2)
 
-
     # backward
-    grad_w0 = np.zeros(w0.shape)
-    grad_w1 = np.zeros(w1.shape)
-    grad_b0 = np.zeros(b0.shape)
-    grad_b1 = np.zeros(b1.shape)
+    grad_w0 = np.zeros(w0.shape) # matriz de 0 com o mesmo shape de w0
+    grad_w1 = np.zeros(w1.shape) # matriz de 0 com o mesmo shape de w1
+    grad_b0 = np.zeros(b0.shape) # matriz de 0 com o mesmo shape de b0
+    grad_b1 = np.zeros(b1.shape) # matriz de 0 com o mesmo shape de b1
 
     grad_L = 1
     grad_e = grad_L * e
@@ -119,7 +122,7 @@ def main():
     np.random.seed(42)
 
     # inicialização aleatória
-    w0 = np.random.rand(2, 2)
+    w0 = np.random.rand(2, 2) # matriz 2x2 com valores aleatórios entre 0 e 1
     w1 = np.random.rand(2)
     b0 = np.random.rand(2)
     b1 = np.random.rand(1)
@@ -197,7 +200,7 @@ def main():
     # Logo, learning_rate = taxa * 50 garante o mesmo tamanho de passo de gradiente exato
     opt = SGD(learning_rate=taxa * 50)
     model.compile(loss='mean_squared_error', optimizer=opt, metrics=['accuracy'])
-    model.fit(X, Y, epochs=10000, batch_size=100, verbose=False)
+    model.fit(X, Y, epochs=1000, batch_size=100, verbose=False)
 
     loss_k, acc_k = model.evaluate(X, Y, verbose=0)
     print(f"Acurácia final (Keras) : {acc_k * 100:.0f}%")
@@ -266,6 +269,9 @@ def main():
 
     # 5. Gera o diagrama da arquitetura da rede neural
     plot_neural_network_architecture()
+
+    # 6. Gera o grafo computacional detalhado (Forward & Backward)
+    plot_computational_graph()
 
 
 def plot_neural_network_architecture(filename_png='graphics/arquitetura_rede.png', filename_svg='graphics/arquitetura_rede.svg'):
@@ -378,6 +384,217 @@ def plot_neural_network_architecture(filename_png='graphics/arquitetura_rede.png
     plt.savefig(filename_svg, bbox_inches='tight')
     plt.close()
     print(f"[OK] Gráfico da arquitetura salvo como '{filename_png}' e '{filename_svg}'.")
+
+
+def plot_computational_graph(filename_png='graphics/grafo_computacional.png', filename_svg='graphics/grafo_computacional.svg'):
+    import matplotlib.patches as patches
+
+    fig, ax = plt.subplots(figsize=(24, 10), dpi=200)
+    ax.axis('off')
+    ax.set_xlim(0, 24)
+    ax.set_ylim(0, 10)
+
+    # Cores
+    c_edge = '#2980b9'
+    c_grad = '#c0392b'
+    c_forward = '#2c3e50'
+    c_op_bg = '#ffffff'
+    c_op_border = '#34495e'
+    c_act_bg = '#fcf3cf'
+    c_act_border = '#f39c12'
+
+    r_circle = 0.32
+
+    def draw_circle_op(x, y, label):
+        circle = patches.Circle((x, y), r_circle, facecolor=c_op_bg, edgecolor=c_op_border, lw=1.6, zorder=5)
+        ax.add_patch(circle)
+        ax.text(x, y, label, fontsize=14, fontweight='bold', color=c_op_border, ha='center', va='center', zorder=6)
+
+    def draw_rect_act(x, y, label=r'$\sigma$ (Sigmoid)'):
+        w, h = 1.3, 0.65
+        rect = patches.FancyBboxPatch((x - w/2, y - h/2), w, h, boxstyle='round,pad=0.08',
+                                      facecolor=c_act_bg, edgecolor=c_act_border, lw=1.6, zorder=5)
+        ax.add_patch(rect)
+        ax.text(x, y, label, fontsize=10, fontweight='bold', color='#7d6608', ha='center', va='center', zorder=6)
+
+    def draw_arrow(x1, y1, x2, y2, label_fwd='', label_grad='', fwd_offset=(0, 0.16), grad_offset=(0, -0.22),
+                   fwd_ha='center', grad_ha='center', curve=0):
+        rad_str = f"arc3,rad={curve}" if curve != 0 else "arc3,rad=0"
+        arrow = patches.FancyArrowPatch((x1, y1), (x2, y2),
+                                         arrowstyle='->,head_length=5,head_width=3',
+                                         connectionstyle=rad_str,
+                                         color=c_edge, lw=1.5, zorder=3)
+        ax.add_patch(arrow)
+        mx = (x1 + x2) / 2
+        my = (y1 + y2) / 2
+        if curve != 0:
+            my += curve * 0.5 * (x2 - x1)
+
+        if label_fwd:
+            ax.text(mx + fwd_offset[0], my + fwd_offset[1], label_fwd, fontsize=9.5,
+                    color=c_forward, fontweight='bold', ha=fwd_ha, va='center', zorder=7,
+                    bbox=dict(boxstyle='square,pad=0.1', facecolor='white', edgecolor='none', alpha=0.85))
+        if label_grad:
+            ax.text(mx + grad_offset[0], my + grad_offset[1], label_grad, fontsize=8.5,
+                    color=c_grad, fontweight='bold', ha=grad_ha, va='center', zorder=7,
+                    bbox=dict(boxstyle='square,pad=0.1', facecolor='white', edgecolor='none', alpha=0.85))
+
+    # Posições dos nós
+    pos_M00 = (2.0, 8.5)
+    pos_M01 = (2.0, 6.5)
+    pos_S02 = (4.0, 7.5)
+    pos_V0  = (5.8, 7.5)
+    pos_Y0  = (7.8, 7.5)
+
+    pos_M10 = (2.0, 3.5)
+    pos_M11 = (2.0, 1.5)
+    pos_S12 = (4.0, 2.5)
+    pos_V1  = (5.8, 2.5)
+    pos_Y1  = (7.8, 2.5)
+
+    pos_M20 = (10.5, 6.2)
+    pos_M21 = (10.5, 3.8)
+    pos_S22 = (12.3, 5.0)
+    pos_V2  = (14.0, 5.0)
+    pos_Y2  = (15.8, 5.0)
+
+    pos_Sub = (17.8, 5.0)
+    pos_Sq  = (19.6, 5.0)
+    pos_Half= (21.4, 5.0)
+
+    # Desenho dos nós
+    draw_circle_op(*pos_M00, r'$\times$')
+    draw_circle_op(*pos_M01, r'$\times$')
+    draw_circle_op(*pos_S02, '$+$')
+    draw_circle_op(*pos_V0,  '$+$')
+    draw_rect_act(*pos_Y0,   r'$\sigma$ (Sigmoid)')
+
+    draw_circle_op(*pos_M10, r'$\times$')
+    draw_circle_op(*pos_M11, r'$\times$')
+    draw_circle_op(*pos_S12, '$+$')
+    draw_circle_op(*pos_V1,  '$+$')
+    draw_rect_act(*pos_Y1,   r'$\sigma$ (Sigmoid)')
+
+    draw_circle_op(*pos_M20, r'$\times$')
+    draw_circle_op(*pos_M21, r'$\times$')
+    draw_circle_op(*pos_S22, '$+$')
+    draw_circle_op(*pos_V2,  '$+$')
+    draw_rect_act(*pos_Y2,   r'$\sigma$ (Sigmoid)')
+
+    draw_circle_op(*pos_Sub, '$+$')
+    draw_circle_op(*pos_Sq,  '$(\cdot)^2$')
+    draw_circle_op(*pos_Half,r'$\times \frac{1}{2}$')
+
+    # Conexões Neurônio 0
+    draw_arrow(0.3, 8.5, pos_M00[0] - r_circle, pos_M00[1], label_fwd='$x_0$', fwd_offset=(-0.3, 0.16))
+    draw_arrow(1.0, 9.6, pos_M00[0] - 0.1, pos_M00[1] + r_circle,
+               label_fwd='$w_{0[0,0]}$', label_grad=r'grad_$w_0[0,0] = \mathrm{grad}_{v_0} \cdot x_0$',
+               fwd_offset=(-0.1, 0.22), grad_offset=(-0.1, -0.22))
+
+    draw_arrow(0.3, 6.5, pos_M01[0] - r_circle, pos_M01[1], label_fwd='$x_1$', fwd_offset=(-0.3, 0.16))
+    draw_arrow(1.0, 5.4, pos_M01[0] - 0.1, pos_M01[1] - r_circle,
+               label_fwd='$w_{0[0,1]}$', label_grad=r'grad_$w_0[0,1] = \mathrm{grad}_{v_0} \cdot x_1$',
+               fwd_offset=(-0.1, -0.22), grad_offset=(-0.1, 0.22))
+
+    draw_arrow(pos_M00[0] + r_circle, pos_M00[1], pos_S02[0] - r_circle, pos_S02[1] + 0.15,
+               label_fwd='$s_{00}$', label_grad=r'grad_$s_{00} = \mathrm{grad}_{v_0}$')
+    draw_arrow(pos_M01[0] + r_circle, pos_M01[1], pos_S02[0] - r_circle, pos_S02[1] - 0.15,
+               label_fwd='$s_{01}$', label_grad=r'grad_$s_{01} = \mathrm{grad}_{v_0}$')
+    draw_arrow(pos_S02[0] + r_circle, pos_S02[1], pos_V0[0] - r_circle, pos_V0[1],
+               label_fwd='$s_{02}$', label_grad=r'grad_$s_{02} = \mathrm{grad}_{v_0}$')
+
+    draw_arrow(pos_V0[0], 8.8, pos_V0[0], pos_V0[1] + r_circle,
+               label_fwd='$b_{0[0]}$', label_grad=r'grad_$b_0[0] = \mathrm{grad}_{v_0}$',
+               fwd_offset=(-0.3, 0.2), grad_offset=(0.6, 0.2))
+
+    draw_arrow(pos_V0[0] + r_circle, pos_V0[1], pos_Y0[0] - 0.65, pos_Y0[1],
+               label_fwd='$v_0$', label_grad=r'grad_$v_0 = \mathrm{grad}_{y_0} \cdot y_0(1-y_0)$')
+
+    # Conexões Neurônio 1
+    draw_arrow(0.3, 3.5, pos_M10[0] - r_circle, pos_M10[1], label_fwd='$x_0$', fwd_offset=(-0.3, 0.16))
+    draw_arrow(1.0, 4.6, pos_M10[0] - 0.1, pos_M10[1] + r_circle,
+               label_fwd='$w_{0[1,0]}$', label_grad=r'grad_$w_0[1,0] = \mathrm{grad}_{v_1} \cdot x_0$',
+               fwd_offset=(-0.1, 0.22), grad_offset=(-0.1, -0.22))
+
+    draw_arrow(0.3, 1.5, pos_M11[0] - r_circle, pos_M11[1], label_fwd='$x_1$', fwd_offset=(-0.3, 0.16))
+    draw_arrow(1.0, 0.4, pos_M11[0] - 0.1, pos_M11[1] - r_circle,
+               label_fwd='$w_{0[1,1]}$', label_grad=r'grad_$w_0[1,1] = \mathrm{grad}_{v_1} \cdot x_1$',
+               fwd_offset=(-0.1, -0.22), grad_offset=(-0.1, 0.22))
+
+    draw_arrow(pos_M10[0] + r_circle, pos_M10[1], pos_S12[0] - r_circle, pos_S12[1] + 0.15,
+               label_fwd='$s_{10}$', label_grad=r'grad_$s_{10} = \mathrm{grad}_{v_1}$')
+    draw_arrow(pos_M11[0] + r_circle, pos_M11[1], pos_S12[0] - r_circle, pos_S12[1] - 0.15,
+               label_fwd='$s_{11}$', label_grad=r'grad_$s_{11} = \mathrm{grad}_{v_1}$')
+    draw_arrow(pos_S12[0] + r_circle, pos_S12[1], pos_V1[0] - r_circle, pos_V1[1],
+               label_fwd='$s_{12}$', label_grad=r'grad_$s_{12} = \mathrm{grad}_{v_1}$')
+
+    draw_arrow(pos_V1[0], 1.2, pos_V1[0], pos_V1[1] - r_circle,
+               label_fwd='$b_{0[1]}$', label_grad=r'grad_$b_0[1] = \mathrm{grad}_{v_1}$',
+               fwd_offset=(-0.3, -0.2), grad_offset=(0.6, -0.2))
+
+    draw_arrow(pos_V1[0] + r_circle, pos_V1[1], pos_Y1[0] - 0.65, pos_Y1[1],
+               label_fwd='$v_1$', label_grad=r'grad_$v_1 = \mathrm{grad}_{y_1} \cdot y_1(1-y_1)$')
+
+    # Conexões Camada Oculta -> Saída
+    draw_arrow(pos_Y0[0] + 0.65, pos_Y0[1], pos_M20[0] - r_circle, pos_M20[1] + 0.15,
+               label_fwd='$y_0$', label_grad=r'grad_$y_0 = \mathrm{grad}_{v_2} \cdot w_1[0]$',
+               curve=-0.1, fwd_offset=(0, 0.2), grad_offset=(0, -0.25))
+    draw_arrow(9.5, 7.4, pos_M20[0] - 0.1, pos_M20[1] + r_circle,
+               label_fwd='$w_{1[0]}$', label_grad=r'grad_$w_1[0] = \mathrm{grad}_{v_2} \cdot y_0$',
+               fwd_offset=(-0.1, 0.2), grad_offset=(-0.1, -0.2))
+
+    draw_arrow(pos_Y1[0] + 0.65, pos_Y1[1], pos_M21[0] - r_circle, pos_M21[1] - 0.15,
+               label_fwd='$y_1$', label_grad=r'grad_$y_1 = \mathrm{grad}_{v_2} \cdot w_1[1]$',
+               curve=0.1, fwd_offset=(0, -0.2), grad_offset=(0, 0.25))
+    draw_arrow(9.5, 2.6, pos_M21[0] - 0.1, pos_M21[1] - r_circle,
+               label_fwd='$w_{1[1]}$', label_grad=r'grad_$w_1[1] = \mathrm{grad}_{v_2} \cdot y_1$',
+               fwd_offset=(-0.1, -0.2), grad_offset=(-0.1, 0.2))
+
+    draw_arrow(pos_M20[0] + r_circle, pos_M20[1], pos_S22[0] - r_circle, pos_S22[1] + 0.15,
+               label_fwd='$s_{20}$', label_grad=r'grad_$s_{20} = \mathrm{grad}_{v_2}$')
+    draw_arrow(pos_M21[0] + r_circle, pos_M21[1], pos_S22[0] - r_circle, pos_S22[1] - 0.15,
+               label_fwd='$s_{21}$', label_grad=r'grad_$s_{21} = \mathrm{grad}_{v_2}$')
+    draw_arrow(pos_S22[0] + r_circle, pos_S22[1], pos_V2[0] - r_circle, pos_V2[1],
+               label_fwd='$s_{22}$', label_grad=r'grad_$s_{22} = \mathrm{grad}_{v_2}$')
+
+    draw_arrow(pos_V2[0], 6.3, pos_V2[0], pos_V2[1] + r_circle,
+               label_fwd='$b_{1[0]}$', label_grad=r'grad_$b_1[0] = \mathrm{grad}_{v_2}$',
+               fwd_offset=(-0.3, 0.2), grad_offset=(0.6, 0.2))
+
+    draw_arrow(pos_V2[0] + r_circle, pos_V2[1], pos_Y2[0] - 0.65, pos_Y2[1],
+               label_fwd='$v_2$', label_grad=r'grad_$v_2 = \mathrm{grad}_{y_2} \cdot y_2(1-y_2)$')
+
+    # Perda
+    draw_arrow(pos_Y2[0] + 0.65, pos_Y2[1], pos_Sub[0] - r_circle, pos_Sub[1],
+               label_fwd='$y_2$', label_grad=r'grad_$y_2 = \mathrm{grad}_e = e$')
+    draw_arrow(pos_Sub[0], 6.3, pos_Sub[0], pos_Sub[1] + r_circle,
+               label_fwd='$-d$', fwd_offset=(-0.25, 0.2))
+
+    draw_arrow(pos_Sub[0] + r_circle, pos_Sub[1], pos_Sq[0] - r_circle, pos_Sq[1],
+               label_fwd='$e$', label_grad=r'grad_$e = \mathrm{grad}_L \cdot e$')
+    draw_arrow(pos_Sq[0] + r_circle, pos_Sq[1], pos_Half[0] - r_circle, pos_Half[1],
+               label_fwd='$e^2$', label_grad=r'grad_$e^2 = \frac{1}{2}$')
+    draw_arrow(pos_Half[0] + r_circle, pos_Half[1], 23.2, pos_Half[1],
+               label_fwd='$L$', label_grad=r'grad_$L = 1$',
+               fwd_offset=(0, 0.25), grad_offset=(0, -0.25))
+
+    # Título e Legenda
+    plt.suptitle("Grafo Computacional da Rede Neural ($2 \\rightarrow 2 \\rightarrow 1$): Forward Pass e Backpropagation",
+                 fontsize=16, fontweight='bold', y=0.97, color='#2c3e50')
+
+    legend_text = (
+        r"$\mathbf{Legenda:}\quad "
+        r"\text{Texto em Azul/Preto: Variáveis do Forward Pass} \qquad\qquad "
+        r"\text{Texto em Vermelho: Derivadas Analíticas do Backpropagation (Regra da Cadeia)} \qquad\qquad "
+        r"\text{Ativação: } \sigma(v) = \frac{1}{1 + e^{-v}}$"
+    )
+    fig.text(0.5, 0.04, legend_text, fontsize=11, ha='center', va='center',
+             bbox=dict(boxstyle='round,pad=0.5', facecolor='#f8f9fa', edgecolor='#bdc3c7', lw=1.2))
+
+    plt.savefig(filename_png, bbox_inches='tight')
+    plt.savefig(filename_svg, bbox_inches='tight')
+    plt.close()
+    print(f"[OK] Grafo computacional salvo como '{filename_png}' e '{filename_svg}'.")
 
 
 main()
