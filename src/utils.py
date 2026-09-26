@@ -23,6 +23,11 @@ def sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
 
 
+def relu(x):
+    """Função de ativação ReLU: relu(x) = max(0, x)."""
+    return np.maximum(0.0, x)
+
+
 def get_dataset(n_samples=100, noise=0.1, random_state=42):
     """
     Gera o dataset sintético Two Moons (Duas Luas).

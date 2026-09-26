@@ -3,8 +3,8 @@
 Projeto desenvolvido para a disciplina de **Matemática para Ciência de Dados** (UFPE). O objetivo é demonstrar a fundamentação matemática, implementação manual do algoritmo de *Backpropagation* (regra da cadeia passo a passo) e comparação determinística com o framework **Keras/TensorFlow** no problema clássico de classificação não-linear das **Duas Luas (*make_moons*)**.
 
 O projeto conta com duas arquiteturas de rede para análise e comparação geométrica:
-- **Rede A ($2 \rightarrow 2 \rightarrow 1$):** Arquitetura básica com 2 neurônios na camada oculta.
-- **Rede B ($2 \rightarrow 4 \rightarrow 1$):** Arquitetura aprimorada com 4 neurônios na camada oculta, contornando a não-linearidade das luas e atingindo acurácia próxima a 100%.
+- **Rede A ($2 \rightarrow 2 \rightarrow 1$):** Arquitetura básica com 2 neurônios com ativação Sigmoide na camada oculta.
+- **Rede B ($2 \rightarrow 4 \rightarrow 1$):** Arquitetura aprimorada com 4 neurônios com ativação ReLU na camada oculta, contornando a não-linearidade das luas e atingindo acurácia próxima a 100%.
 
 ---
 
@@ -27,7 +27,7 @@ Para cada arquitetura, foram desenvolvidas duas implementações:
 
 O código-fonte foi estruturado seguindo o princípio de responsabilidade única e DRY (*Don't Repeat Yourself*):
 
-- **`src/utils.py`**: Centraliza as configurações do ambiente (supressão de logs do TensorFlow/oneDNN), importações centrais, definição da função de ativação Sigmoide, geração consistente do dataset e rotinas genéricas de plotagem (dataset e fronteira de decisão com as retas ocultas).
+- **`src/utils.py`**: Centraliza as configurações do ambiente (supressão de logs do TensorFlow/oneDNN), importações centrais, definição das funções de ativação Sigmoide e ReLU, geração consistente do dataset e rotinas genéricas de plotagem (dataset e fronteira de decisão com as retas ocultas).
 - **`src/rede_a.py`**: Contém a derivação analítica escalar passo a passo para a topologia $2 \rightarrow 2 \rightarrow 1$, seu loop de treinamento e a geração de seus diagramas de arquitetura e grafo computacional.
 - **`src/rede_b.py`**: Contém a formulação matricial/vetorial para a topologia $2 \rightarrow 4 \rightarrow 1$, seu loop de treinamento e a geração de seus diagramas de arquitetura e grafo computacional.
 - **`src/main.py`**: Menu interativo e orquestrador principal com opções para executar a Rede Referência (Rede A), a Rede Alterada (Rede B), ambas sequencialmente ou sair.
@@ -41,11 +41,11 @@ O código-fonte foi estruturado seguindo o princípio de responsabilidade única
 | **Arquivo Fonte** | `src/rede_a.py` | `src/rede_b.py` |
 | **Topologia** | **$2 \rightarrow 2 \rightarrow 1$** | **$2 \rightarrow 4 \rightarrow 1$** |
 | **Neurônios Ocultos** | 2 neurônios | 4 neurônios |
-| **Ativação Camada Oculta** | Sigmoide | Sigmoide |
+| **Ativação Camada Oculta** | Sigmoide | **ReLU** |
 | **Ativação Camada de Saída** | Sigmoide | Sigmoide |
 | **Total de Parâmetros** | 9 parâmetros | 17 parâmetros |
 | **Retas de Partição Ocultas** | 2 retas no plano 2D | 4 retas no plano 2D |
-| **Acurácia Final Obtida** | $\approx 85\% - 90\%$ | **$\approx 98\% - 100\%$** |
+| **Acurácia Final Obtida** | $\approx 85\% - 90\%$ | **100%** |
 | **Convergência Keras vs. Manual** | Pesos e perda idênticos | Pesos e perda idênticos |
 
 ---
@@ -66,13 +66,13 @@ Para validar a exatidão das derivadas analíticas implementadas no algoritmo de
 
 ---
 
-### 2. Rede B ($2 \rightarrow 4 \rightarrow 1$) - 4 Neurônios Ocultos
+### 2. Rede B ($2 \rightarrow 4 \rightarrow 1$) - 4 Neurônios Ocultos (ReLU)
 
 | Métrica / Parâmetro | Implementação Manual (NumPy) | Validação Keras / TensorFlow |
 | :--- | :--- | :--- |
-| **Acurácia Inicial** | 50% | 50% |
-| **Acurácia Final** | **$\approx 98\% - 100\%$** | **$\approx 98\% - 100\%$** |
-| **Loss Final** | $\approx 0.7200$ (Soma $\frac{1}{2}e^2$) | $\approx 0.0144$ (MSE Médio) |
+| **Acurácia Inicial** | 26% | 26% |
+| **Acurácia Final** | **100%** | **100%** |
+| **Loss Final** | **0.003326** (Soma $\frac{1}{2}e^2$) | **0.000067** (MSE Médio) |
 | **Pesos Ocultos ($w_0$)** | Matriz $4 \times 2$ | Matriz $2 \times 4$ transposta |
 | **Fronteira Resultante** | 4 retas envolvendo as luas | 4 retas envolvendo as luas |
 
