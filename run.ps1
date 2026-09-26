@@ -1,5 +1,5 @@
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$minPythonVersion = "3.9"
+$minPythonVersion = "3.10"
 
 if (Test-Path "$scriptDir\venv\Scripts\python.exe") {
     $pythonBin = "$scriptDir\venv\Scripts\python.exe"

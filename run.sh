@@ -1,5 +1,7 @@
+#!/usr/bin/env bash
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MIN_PYTHON_VERSION="3.9"
+MIN_PYTHON_VERSION="3.10"
 
 print_pyenv_tip() {
     if [ "$(uname -s)" = "Darwin" ] && ! command -v pyenv &> /dev/null

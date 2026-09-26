@@ -2,7 +2,7 @@
 setlocal
 
 set "SCRIPT_DIR=%~dp0"
-set "MIN_PYTHON_VERSION=3.9"
+set "MIN_PYTHON_VERSION=3.10"
 
 if exist "%SCRIPT_DIR%venv\Scripts\python.exe" (
     set "PYTHON_BIN=%SCRIPT_DIR%venv\Scripts\python.exe"

@@ -146,7 +146,7 @@ Visualização das **4 retas lineares** dos neurônios da camada oculta ($v_0, v
 
 ## Pré-requisitos
 
-- **Python 3.9 ou superior**
+- **Python 3.10 ou superior** (as versões fixadas em `requirements.txt` — scikit-learn 1.7, NumPy 2.2, Matplotlib 3.10 e TensorFlow 2.21 — não suportam Python 3.9)
 - Gerenciador de pacotes `pip`
 
 Verifique suas versões com:
@@ -154,6 +154,8 @@ Verifique suas versões com:
 python --version
 pip --version
 ```
+
+> **macOS:** o `python3` nativo do sistema (`/usr/bin/python3`) é a versão 3.9. Instale uma versão mais recente, por exemplo via `pyenv install 3.12 && pyenv local 3.12` ou `brew install python@3.12`, antes de criar o ambiente virtual.
 
 ---
 
