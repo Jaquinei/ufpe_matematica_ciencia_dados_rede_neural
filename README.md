@@ -1,91 +1,117 @@
-# UFPE - Matemática para Ciência de Dados: Implementação de Rede Neural (MLP)
+# UFPE - Matemática para Ciência de Dados: Implementação de Redes Neurais (MLP)
 
-Projeto desenvolvido para a disciplina de **Matemática para Ciência de Dados** (UFPE). O objetivo é demonstrar a fundamentação matemática, implementação manual do algoritmo de *Backpropagation* e comparação determinística com o framework **Keras/TensorFlow** no problema clássico de classificação não-linear das **Duas Luas (*make_moons*)**.
+Projeto desenvolvido para a disciplina de **Matemática para Ciência de Dados** (UFPE). O objetivo é demonstrar a fundamentação matemática, implementação manual do algoritmo de *Backpropagation* (regra da cadeia passo a passo) e comparação determinística com o framework **Keras/TensorFlow** no problema clássico de classificação não-linear das **Duas Luas (*make_moons*)**.
+
+O projeto conta com duas arquiteturas de rede para análise e comparação geométrica:
+- **Rede A ($2 \rightarrow 2 \rightarrow 1$):** Arquitetura básica com 2 neurônios na camada oculta.
+- **Rede B ($2 \rightarrow 4 \rightarrow 1$):** Arquitetura aprimorada com 4 neurônios na camada oculta, contornando a não-linearidade das luas e atingindo acurácia próxima a 100%.
 
 ---
 
 ## Visão Geral do Projeto
 
-O projeto aborda a resolução de um problema de classificação binária não-linearmente separável gerado via `sklearn.datasets.make_moons`. 
+O projeto aborda a resolução do problema de classificação binária gerado via `sklearn.datasets.make_moons` (100 amostras com ruído 0.1).
 
-Para resolver o problema, foram desenvolvidas duas abordagens:
+Para cada arquitetura, foram desenvolvidas duas implementações:
 1. **Rede Neural Manual (NumPy Puro):**
-   - Arquitetura $2 \rightarrow 2 \rightarrow 1$ (2 entradas, 2 neurônios ocultos com ativação Sigmoide e 1 neurônio de saída com ativação Sigmoide).
-   - Cálculo explícito do *Forward Pass* e derivação analítica passo a passo do *Backpropagation* usando a regra da cadeia para atualização dos pesos e biases via Gradiente Descendente.
+   - Cálculo explícito do *Forward Pass* e derivação analítica de todos os gradientes no *Backpropagation* usando a regra da cadeia.
+   - Atualização dos pesos e biases via Gradiente Descendente.
    - Função de perda quadrática: $L = \frac{1}{2}(y - d)^2$.
 2. **Rede Neural Equivalente em Keras:**
-   - Implementação da mesma topologia utilizando `keras.models.Sequential` e camadas `Dense`.
-   - Inicialização com os mesmos pesos e taxa de aprendizado equivalente para validação cruzada exata dos pesos e perda calculados.
+   - Implementação utilizando `keras.models.Sequential` e camadas `Dense`.
+   - Inicialização com os mesmos pesos da rede manual e taxa de aprendizado equivalente para validação cruzada determinística.
 
 ---
 
-## Especificações e Comparação
+## Estrutura Modular do Projeto
 
-| Especificação | Rede Manual (NumPy Puro) | Rede Framework (Keras / TensorFlow) |
+O código-fonte foi estruturado seguindo o princípio de responsabilidade única e DRY (*Don't Repeat Yourself*):
+
+- **`src/utils.py`**: Centraliza as configurações do ambiente (supressão de logs do TensorFlow/oneDNN), importações centrais, definição da função de ativação Sigmoide, geração consistente do dataset e rotinas genéricas de plotagem (dataset e fronteira de decisão com as retas ocultas).
+- **`src/rede_a.py`**: Contém a derivação analítica escalar passo a passo para a topologia $2 \rightarrow 2 \rightarrow 1$, seu loop de treinamento e a geração de seus diagramas de arquitetura e grafo computacional.
+- **`src/rede_b.py`**: Contém a formulação matricial/vetorial para a topologia $2 \rightarrow 4 \rightarrow 1$, seu loop de treinamento e a geração de seus diagramas de arquitetura e grafo computacional.
+- **`src/main.py`**: Orquestrador central que executa o pipeline de ambas as redes em sequência.
+
+---
+
+## Especificações e Comparação entre Rede A e Rede B
+
+| Especificação | Rede A (Básica) | Rede B (Aprimorada) |
 | :--- | :--- | :--- |
-| **Base de Dados** | Make Moons (*Duas Luas*) | Make Moons (*Duas Luas*) |
-| **Arquitetura** | 2 entradas, 2 neurônios ocultos, 1 neurônio de saída (2-2-1) | 2 entradas, 2 neurônios ocultos, 1 neurônio de saída (2-2-1) |
+| **Arquivo Fonte** | `src/rede_a.py` | `src/rede_b.py` |
+| **Topologia** | **$2 \rightarrow 2 \rightarrow 1$** | **$2 \rightarrow 4 \rightarrow 1$** |
+| **Neurônios Ocultos** | 2 neurônios | 4 neurônios |
 | **Ativação Camada Oculta** | Sigmoide | Sigmoide |
 | **Ativação Camada de Saída** | Sigmoide | Sigmoide |
-| **Inicialização** | Aleatória uniforme com Semente 42 | Pesos iniciais copiados da rede manual |
-| **Função de Perda (Loss)** | Erro Quadrático | Erro Quadrático Médio (MSE) |
-| **Otimizador** | Gradiente Descendente (SGD) | Gradiente Descendente Estocástico (SGD) |
-| **Épocas de Treinamento** | 10.000 épocas | 10.000 épocas |
-| **Comparação dos Pesos** | Pesos finais aprendidos via Backpropagation | Pesos finais convergem exatamente para os mesmos valores |
-| **Comparação de Acurácia** | Acurácia final idêntica | Acurácia final idêntica |
+| **Total de Parâmetros** | 9 parâmetros | 17 parâmetros |
+| **Retas de Partição Ocultas** | 2 retas no plano 2D | 4 retas no plano 2D |
+| **Acurácia Final Obtida** | $\approx 85\% - 90\%$ | **$\approx 98\% - 100\%$** |
+| **Convergência Keras vs. Manual** | Pesos e perda idênticos | Pesos e perda idênticos |
 
 ---
 
 ## Visualizações e Resultados Gerados
 
-A aplicação gera automaticamente gráficos para demonstrar a distribuição dos dados, a geometria dos neurônios e a convergência da rede:
+Os gráficos são organizados em pastas dedicadas para cada rede:
 
-### 1. Arquitetura da Rede Neural ($2 \rightarrow 2 \rightarrow 1$)
-Diagrama esquemático demonstrando os nós de entrada ($x_0, x_1$), pesos sinápticos ($w_0, w_1$), biases ($b_0, b_1$), neurônios ocultos e saída:
+### 1. Rede A ($2 \rightarrow 2 \rightarrow 1$) - Diretório `graphics/rede_a/`
 
-![Arquitetura da Rede Neural](graphics/arquitetura_rede.png)
+#### Arquitetura da Rede A
+![Arquitetura Rede A](graphics/rede_a/arquitetura_rede.png)
 
----
+#### Grafo Computacional da Rede A (Forward & Backward Pass)
+![Grafo Computacional Rede A](graphics/rede_a/grafo_computacional.png)
 
-### 2. Grafo Computacional (Forward & Backward Pass)
-Detalhamento de todas as operações atômicas, variáveis intermediárias ($s_{ij}, v_i, y_i, e, L$) e gradientes analíticos da regra da cadeia:
-
-![Grafo Computacional](graphics/grafo_computacional.png)
-
----
-
-### 3. Distribuição dos Dados (*Dataset Duas Luas*)
-Visualização da distribuição espacial dos pontos das duas classes geradas pelo `make_moons`:
-
-![Dataset Duas Luas](graphics/duas_luas.svg)
+#### Fronteira de Decisão e Retas da Rede A
+Visualização das **2 retas lineares** dos neurônios da camada oculta ($v_0 = 0$ e $v_1 = 0$) e da fronteira resultante:
+![Fronteira Rede A](graphics/rede_a/fronteira_duas_luas.png)
 
 ---
 
-### 4. Fronteira de Decisão e Retas dos Neurônios Ocultos
-Visualização das **duas retas lineares** dos neurônios da camada oculta ($v_0 = 0$ e $v_1 = 0$) e da **fronteira de decisão não-linear final** obtida pela combinação na camada de saída:
+### 2. Rede B ($2 \rightarrow 4 \rightarrow 1$) - Diretório `graphics/rede_b/`
 
-![Fronteira de Decisão e Retas Ocultas](graphics/fronteira_duas_luas.png)
+#### Arquitetura da Rede B
+![Arquitetura Rede B](graphics/rede_b/arquitetura_rede.png)
+
+#### Grafo Computacional da Rede B (Forward & Backward Pass)
+![Grafo Computacional Rede B](graphics/rede_b/grafo_computacional.png)
+
+#### Fronteira de Decisão e Retas da Rede B
+Visualização das **4 retas lineares** dos neurônios da camada oculta ($v_0, v_1, v_2, v_3 = 0$) envolvendo as luas com precisão superior:
+![Fronteira Rede B](graphics/rede_b/fronteira_duas_luas.png)
 
 ---
 
-## Estrutura do Projeto
+## Estrutura de Diretórios
 
 ```text
 ├── graphics/
-│   ├── arquitetura_rede.png      # Diagrama da arquitetura da rede neural (PNG)
-│   ├── arquitetura_rede.svg      # Diagrama da arquitetura da rede neural (SVG)
-│   ├── grafo_computacional.png   # Grafo computacional Forward & Backward (PNG)
-│   ├── grafo_computacional.svg   # Grafo computacional Forward & Backward (SVG)
-│   ├── duas_luas.svg             # Gráfico do dataset de entrada
-│   ├── fronteira_duas_luas.png   # Gráfico da fronteira de decisão (PNG)
-│   └── fronteira_duas_luas.svg   # Gráfico da fronteira de decisão (SVG)
+│   ├── rede_a/
+│   │   ├── arquitetura_rede.png      # Diagrama da arquitetura Rede A (PNG)
+│   │   ├── arquitetura_rede.svg      # Diagrama da arquitetura Rede A (SVG)
+│   │   ├── grafo_computacional.png   # Grafo computacional Rede A (PNG)
+│   │   ├── grafo_computacional.svg   # Grafo computacional Rede A (SVG)
+│   │   ├── duas_luas.svg             # Gráfico do dataset de entrada
+│   │   ├── fronteira_duas_luas.png   # Fronteira de decisão e 2 retas (PNG)
+│   │   └── fronteira_duas_luas.svg   # Fronteira de decisão e 2 retas (SVG)
+│   └── rede_b/
+│       ├── arquitetura_rede.png      # Diagrama da arquitetura Rede B (PNG)
+│       ├── arquitetura_rede.svg      # Diagrama da arquitetura Rede B (SVG)
+│       ├── grafo_computacional.png   # Grafo computacional Rede B (PNG)
+│       ├── grafo_computacional.svg   # Grafo computacional Rede B (SVG)
+│       ├── duas_luas.svg             # Gráfico do dataset de entrada
+│       ├── fronteira_duas_luas.png   # Fronteira de decisão e 4 retas (PNG)
+│       └── fronteira_duas_luas.svg   # Fronteira de decisão e 4 retas (SVG)
 ├── src/
-│   └── main.py                   # Implementação da rede manual, modelo Keras e gráficos
-├── requirements.txt              # Dependências do projeto (scikit-learn, numpy, matplotlib, tensorflow)
-├── run.ps1                       # Script de execução automatizada para Windows (PowerShell)
-├── run.bat                      # Script de execução automatizada para Windows (CMD)
-├── run.sh                       # Script de execução automatizada para Linux/macOS
-└── README.md                    # Documentação do projeto
+│   ├── main.py                       # Orquestrador principal (executa Rede A e Rede B)
+│   ├── rede_a.py                     # Implementação e execução da Rede A (2 -> 2 -> 1)
+│   ├── rede_b.py                     # Implementação e execução da Rede B (2 -> 4 -> 1)
+│   └── utils.py                      # Utilitários compartilhados (dataset, ativações, plots e ambiente)
+├── requirements.txt                  # Dependências do projeto (scikit-learn, numpy, matplotlib, tensorflow)
+├── run.ps1                           # Script de execução automatizada para Windows (PowerShell)
+├── run.bat                           # Script de execução automatizada para Windows (CMD)
+├── run.sh                            # Script de execução automatizada para Linux/macOS
+└── README.md                         # Documentação completa do projeto
 ```
 
 ---
@@ -103,7 +129,7 @@ pip --version
 
 ---
 
-##  Como Executar
+## Como Executar
 
 ### 1. Criando e Ativando o Ambiente Virtual (`venv`)
 
@@ -137,20 +163,26 @@ pip install -r requirements.txt
 
 ---
 
-### 3. Executando a Aplicação
+### 3. Executando as Aplicações
 
-#### Utilizando os scripts automatizados:
-- **Windows (PowerShell):** `.\run.ps1`
-- **Windows (CMD):** `run.bat`
-- **Linux/macOS:** `./run.sh`
-
-#### Ou executando diretamente via Python:
+#### Executando ambas as redes sequencialmente (Recomendado):
 ```bash
 python src/main.py
 ```
+*(Ou através dos scripts `.\run.ps1`, `run.bat` ou `./run.sh`)*
+
+#### Ou executando uma rede individualmente:
+- **Rede A ($2 \rightarrow 2 \rightarrow 1$):**
+  ```bash
+  python src/rede_a.py
+  ```
+- **Rede B ($2 \rightarrow 4 \rightarrow 1$):**
+  ```bash
+  python src/rede_b.py
+  ```
 
 ---
 
-##  Autor
+## Autor
 
 - **Jaquinei de Oliveira** — UFPE
