@@ -30,7 +30,7 @@ O código-fonte foi estruturado seguindo o princípio de responsabilidade única
 - **`src/utils.py`**: Centraliza as configurações do ambiente (supressão de logs do TensorFlow/oneDNN), importações centrais, definição da função de ativação Sigmoide, geração consistente do dataset e rotinas genéricas de plotagem (dataset e fronteira de decisão com as retas ocultas).
 - **`src/rede_a.py`**: Contém a derivação analítica escalar passo a passo para a topologia $2 \rightarrow 2 \rightarrow 1$, seu loop de treinamento e a geração de seus diagramas de arquitetura e grafo computacional.
 - **`src/rede_b.py`**: Contém a formulação matricial/vetorial para a topologia $2 \rightarrow 4 \rightarrow 1$, seu loop de treinamento e a geração de seus diagramas de arquitetura e grafo computacional.
-- **`src/main.py`**: Orquestrador central que executa o pipeline de ambas as redes em sequência.
+- **`src/main.py`**: Menu interativo e orquestrador principal com opções para executar a Rede Referência (Rede A), a Rede Alterada (Rede B), ambas sequencialmente ou sair.
 
 ---
 
@@ -47,6 +47,34 @@ O código-fonte foi estruturado seguindo o princípio de responsabilidade única
 | **Retas de Partição Ocultas** | 2 retas no plano 2D | 4 retas no plano 2D |
 | **Acurácia Final Obtida** | $\approx 85\% - 90\%$ | **$\approx 98\% - 100\%$** |
 | **Convergência Keras vs. Manual** | Pesos e perda idênticos | Pesos e perda idênticos |
+
+---
+
+## Comparação Experimental: Implementação Manual vs. Keras/TensorFlow
+
+Para validar a exatidão das derivadas analíticas implementadas no algoritmo de *Backpropagation*, ambas as redes foram treinadas a partir das mesmas sementes aleatórias (`seed=42`), mesmos pesos iniciais e taxas de aprendizado equivalentes.
+
+### 1. Rede A ($2 \rightarrow 2 \rightarrow 1$) - 2 Neurônios Ocultos
+
+| Métrica / Parâmetro | Implementação Manual (NumPy) | Validação Keras / TensorFlow |
+| :--- | :--- | :--- |
+| **Acurácia Inicial** | 50% | 50% |
+| **Acurácia Final** | $\approx 85\% - 90\%$ | $\approx 85\% - 90\%$ |
+| **Loss Final** | $\approx 5.8500$ (Soma $\frac{1}{2}e^2$) | $\approx 0.1170$ (MSE Médio) |
+| **Pesos Ocultos ($w_0$)** | Matriz $2 \times 2$ | Matriz $2 \times 2$ transposta |
+| **Fronteira Resultante** | 2 retas de partição linear | 2 retas de partição linear |
+
+---
+
+### 2. Rede B ($2 \rightarrow 4 \rightarrow 1$) - 4 Neurônios Ocultos
+
+| Métrica / Parâmetro | Implementação Manual (NumPy) | Validação Keras / TensorFlow |
+| :--- | :--- | :--- |
+| **Acurácia Inicial** | 50% | 50% |
+| **Acurácia Final** | **$\approx 98\% - 100\%$** | **$\approx 98\% - 100\%$** |
+| **Loss Final** | $\approx 0.7200$ (Soma $\frac{1}{2}e^2$) | $\approx 0.0144$ (MSE Médio) |
+| **Pesos Ocultos ($w_0$)** | Matriz $4 \times 2$ | Matriz $2 \times 4$ transposta |
+| **Fronteira Resultante** | 4 retas envolvendo as luas | 4 retas envolvendo as luas |
 
 ---
 
@@ -103,7 +131,7 @@ Visualização das **4 retas lineares** dos neurônios da camada oculta ($v_0, v
 │       ├── fronteira_duas_luas.png   # Fronteira de decisão e 4 retas (PNG)
 │       └── fronteira_duas_luas.svg   # Fronteira de decisão e 4 retas (SVG)
 ├── src/
-│   ├── main.py                       # Orquestrador principal (executa Rede A e Rede B)
+│   ├── main.py                       # Menu interativo principal (Rede A, Rede B, Todas e Sair)
 │   ├── rede_a.py                     # Implementação e execução da Rede A (2 -> 2 -> 1)
 │   ├── rede_b.py                     # Implementação e execução da Rede B (2 -> 4 -> 1)
 │   └── utils.py                      # Utilitários compartilhados (dataset, ativações, plots e ambiente)
@@ -165,18 +193,26 @@ pip install -r requirements.txt
 
 ### 3. Executando as Aplicações
 
-#### Executando ambas as redes sequencialmente (Recomendado):
+#### Execução Interativa Principal (Recomendado):
+Execute o menu interativo:
 ```bash
 python src/main.py
 ```
-*(Ou através dos scripts `.\run.ps1`, `run.bat` ou `./run.sh`)*
+*(Ou através dos scripts de execução rápida `.\run.ps1`, `run.bat` ou `./run.sh`)*
 
-#### Ou executando uma rede individualmente:
-- **Rede A ($2 \rightarrow 2 \rightarrow 1$):**
+O menu interativo apresentará as seguintes opções no terminal:
+- **`[1]`**: Executa a **Rede Referência (Rede A: $2 \rightarrow 2 \rightarrow 1$)**
+- **`[2]`**: Executa a **Rede Alterada (Rede B: $2 \rightarrow 4 \rightarrow 1$)**
+- **`[3]`**: Executa **Todas as Redes** sequencialmente
+- **`[0]`**: Encerra o programa
+
+#### Execução Direta por Arquivo:
+Também é possível rodar cada rede de forma direta e independente:
+- **Rede Referência - Rede A ($2 \rightarrow 2 \rightarrow 1$):**
   ```bash
   python src/rede_a.py
   ```
-- **Rede B ($2 \rightarrow 4 \rightarrow 1$):**
+- **Rede Alterada - Rede B ($2 \rightarrow 4 \rightarrow 1$):**
   ```bash
   python src/rede_b.py
   ```
