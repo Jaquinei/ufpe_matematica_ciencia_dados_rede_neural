@@ -262,7 +262,122 @@ def main():
     plt.savefig('graphics/fronteira_duas_luas.png', bbox_inches='tight')
     plt.savefig('graphics/fronteira_duas_luas.svg', bbox_inches='tight')
     plt.close()
-    print("\n[OK] Gráficos salvos com sucesso na pasta 'graphics/'.")
+    print("\n[OK] Gráficos da fronteira salvos na pasta 'graphics/'.")
+
+    # 5. Gera o diagrama da arquitetura da rede neural
+    plot_neural_network_architecture()
+
+
+def plot_neural_network_architecture(filename_png='graphics/arquitetura_rede.png', filename_svg='graphics/arquitetura_rede.svg'):
+    import matplotlib.patches as patches
+
+    fig, ax = plt.subplots(figsize=(12, 7.5), dpi=150)
+    ax.axis('off')
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+
+    # Coordenadas dos nós
+    input_coords = [(0.15, 0.70), (0.15, 0.35)]
+    hidden_coords = [(0.50, 0.70), (0.50, 0.35)]
+    output_coords = [(0.85, 0.525)]
+
+    radius = 0.055
+
+    # Conexões Entrada -> Oculta
+    weights_w0_labels = [
+        [r'$w_{0[0,0]}$', r'$w_{0[0,1]}$'],
+        [r'$w_{0[1,0]}$', r'$w_{0[1,1]}$']
+    ]
+
+    for i, (xi, yi) in enumerate(input_coords):
+        for j, (xh, yh) in enumerate(hidden_coords):
+            ax.annotate('', xy=(xh - radius, yh), xytext=(xi + radius, yi),
+                        arrowprops=dict(arrowstyle="->", color="#555555", lw=1.8, mutation_scale=15))
+            t_pos = 0.35 if (i == j) else 0.25
+            xt = xi + t_pos * (xh - xi)
+            yt = yi + t_pos * (yh - yi) + (0.035 if i == 0 else -0.035)
+            ax.text(xt, yt, weights_w0_labels[j][i], fontsize=11, color="#2c3e50",
+                    ha='center', va='center', fontweight='bold',
+                    bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor='none', alpha=0.85))
+
+    # Conexões Oculta -> Saída
+    weights_w1_labels = [r'$w_{1[0]}$', r'$w_{1[1]}$']
+    for j, (xh, yh) in enumerate(hidden_coords):
+        xo, yo = output_coords[0]
+        ax.annotate('', xy=(xo - radius, yo), xytext=(xh + radius, yh),
+                    arrowprops=dict(arrowstyle="->", color="#555555", lw=1.8, mutation_scale=15))
+        xt = xh + 0.35 * (xo - xh)
+        yt = yh + 0.35 * (yo - yh) + (0.035 if j == 0 else -0.035)
+        ax.text(xt, yt, weights_w1_labels[j], fontsize=11, color="#2c3e50",
+                ha='center', va='center', fontweight='bold',
+                bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor='none', alpha=0.85))
+
+    # Seta de saída final
+    xo, yo = output_coords[0]
+    ax.annotate('', xy=(0.98, yo), xytext=(xo + radius, yo),
+                arrowprops=dict(arrowstyle="->", color="#27ae60", lw=2.2, mutation_scale=18))
+    ax.text(0.99, yo + 0.05, r'$\hat{y} \in \{0, 1\}$', fontsize=12, fontweight='bold', color='#27ae60', ha='left')
+    ax.text(0.99, yo - 0.05, r'($y_2 \geq 0.5$)', fontsize=10, color='#555555', ha='left')
+
+    # Desenha nós de entrada
+    for i, (x, y) in enumerate(input_coords):
+        circle = patches.Circle((x, y), radius, facecolor='#3498db', edgecolor='#1d6fa5', lw=2, zorder=4)
+        ax.add_patch(circle)
+        ax.text(x, y, f'$x_{i}$', fontsize=14, fontweight='bold', color='white', ha='center', va='center', zorder=5)
+
+    # Desenha nós da camada oculta
+    hidden_labels = [
+        (r'$v_0$', r'$y_0 = \sigma(v_0)$', r'$b_{0[0]}$'),
+        (r'$v_1$', r'$y_1 = \sigma(v_1)$', r'$b_{0[1]}$')
+    ]
+    for j, (x, y) in enumerate(hidden_coords):
+        circle = patches.Circle((x, y), radius, facecolor='#9b59b6', edgecolor='#6c3483', lw=2, zorder=4)
+        ax.add_patch(circle)
+        ax.text(x, y, f'$h_{j}$', fontsize=14, fontweight='bold', color='white', ha='center', va='center', zorder=5)
+        bias_y = y + 0.12 if j == 0 else y - 0.12
+        ax.annotate('', xy=(x, y + (radius if j == 0 else -radius)), xytext=(x, bias_y),
+                    arrowprops=dict(arrowstyle="->", color="#e67e22", lw=1.8, mutation_scale=14))
+        ax.text(x, bias_y + (0.025 if j == 0 else -0.04), f'Bias {hidden_labels[j][2]}', fontsize=10,
+                fontweight='bold', color='#d35400', ha='center')
+        ax.text(x, y - (0.09 if j == 0 else -0.09), hidden_labels[j][1], fontsize=10,
+                color='#6c3483', ha='center', fontweight='bold',
+                bbox=dict(boxstyle='square,pad=0.2', facecolor='#f4ecf7', edgecolor='#d2b4de', lw=1))
+
+    # Desenha nó de saída
+    xo, yo = output_coords[0]
+    circle = patches.Circle((xo, yo), radius, facecolor='#2ecc71', edgecolor='#1e8449', lw=2, zorder=4)
+    ax.add_patch(circle)
+    ax.text(xo, yo, '$y_2$', fontsize=13, fontweight='bold', color='white', ha='center', va='center', zorder=5)
+    ax.annotate('', xy=(xo, yo + radius), xytext=(xo, yo + 0.12),
+                arrowprops=dict(arrowstyle="->", color="#e67e22", lw=1.8, mutation_scale=14))
+    ax.text(xo, yo + 0.145, r'Bias $b_{1[0]}$', fontsize=10, fontweight='bold', color='#d35400', ha='center')
+    ax.text(xo, yo - 0.09, r'$y_2 = \sigma(v_2)$', fontsize=10, color='#1e8449', fontweight='bold',
+            bbox=dict(boxstyle='square,pad=0.2', facecolor='#eafaf1', edgecolor='#a9dfbf', lw=1))
+
+    # Títulos das camadas no topo
+    ax.text(0.15, 0.92, 'Camada de Entrada\n(2 Variáveis)', fontsize=12, fontweight='bold',
+            ha='center', va='center', color='#2c3e50')
+    ax.text(0.50, 0.92, 'Camada Oculta\n(2 Neurônios Sigmoide)', fontsize=12, fontweight='bold',
+            ha='center', va='center', color='#2c3e50')
+    ax.text(0.85, 0.92, 'Camada de Saída\n(1 Neurônio Sigmoide)', fontsize=12, fontweight='bold',
+            ha='center', va='center', color='#2c3e50')
+
+    # Caixa com detalhes matemáticos no rodapé
+    formula_text = (
+        r"Equações:  $v_0 = w_{0[0,0]}x_0 + w_{0[0,1]}x_1 + b_{0[0]}, \ y_0 = \sigma(v_0)$   |   "
+        r"$v_1 = w_{0[1,0]}x_0 + w_{0[1,1]}x_1 + b_{0[1]}, \ y_1 = \sigma(v_1)$   |   "
+        r"$v_2 = w_{1[0]}y_0 + w_{1[1]}y_1 + b_{1[0]}, \ y_2 = \sigma(v_2)$" + "\n"
+        r"Ativação: $\sigma(v) = \frac{1}{1 + e^{-v}}$          "
+        r"Função de Perda: $L = \frac{1}{2}(y_2 - d)^2$"
+    )
+    fig.text(0.5, 0.05, formula_text, fontsize=9.5, ha='center', va='center',
+             bbox=dict(boxstyle='round,pad=0.6', facecolor='#f8f9fa', edgecolor='#bdc3c7', lw=1.2))
+
+    plt.suptitle("Arquitetura da Rede Neural Implementada ($2 \\rightarrow 2 \\rightarrow 1$)", fontsize=15, fontweight='bold', y=0.98)
+    plt.savefig(filename_png, bbox_inches='tight')
+    plt.savefig(filename_svg, bbox_inches='tight')
+    plt.close()
+    print(f"[OK] Gráfico da arquitetura salvo como '{filename_png}' e '{filename_svg}'.")
 
 
 main()
